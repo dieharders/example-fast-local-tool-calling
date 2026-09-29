@@ -14,7 +14,15 @@ import { useEngine } from './hooks/useEngine'
 import { useFormFiller } from './hooks/useFormFiller'
 
 // Load every font up front so no font request lands mid-fill and spoils the "0 bytes sent" count.
-const FONTS = ['1em "Special Elite"', '1em Caveat', 'bold 1em Caveat', '1em Anton', '1em "Courier Prime"', 'bold 1em "Courier Prime"']
+const FONTS = [
+  '1em "Special Elite"',
+  '1em Caveat',
+  'bold 1em Caveat',
+  '1em Anton',
+  '1em "Courier Prime"',
+  'bold 1em "Courier Prime"',
+  'italic 1em "Courier Prime"',
+]
 
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
@@ -56,11 +64,13 @@ export default function App() {
   }
 
   const onFill = async () => {
-    if (running || status !== 'ready') return
+    if (running || status === 'loading') return
     if (!text.trim()) {
       toast('The clerk needs something to read. Try one of the example tabs.', { icon: '🗒️' })
       return
     }
+    // Data-saver visitors fetch the model on their first Fill instead of on page load.
+    if (status !== 'ready' && !(await load())) return
     if (!desktop) formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     const stats = await filler.fill(text)
     if (!stats) return
@@ -102,6 +112,8 @@ export default function App() {
           <LegalPad
             value={text}
             exampleId={exampleId}
+            reading={filler.reading}
+            locked={running}
             onChange={(t) => {
               setText(t)
               setExampleId(null)
@@ -110,9 +122,9 @@ export default function App() {
             onSubmit={onFill}
           />
           <FillControls
-            canFill={status === 'ready' && !running}
+            canFill={(status === 'ready' || status === 'idle') && !running}
             running={running}
-            engineReady={status === 'ready'}
+            engineReady={status === 'ready' || status === 'idle'}
             nudgeKey={nudgeKey}
             onFill={onFill}
             onShred={onShred}
@@ -121,13 +133,14 @@ export default function App() {
             ticket={filler.ticket}
             modelLabel={engine.modelLabel}
             runtimeLabel={engine.runtimeLabel}
+            lanes={engine.lanes}
             status={status}
             progress={progress}
             error={error}
             phase={filler.phase}
-            reading={filler.reading}
+            calls={filler.progress}
             stats={filler.stats}
-            onRetry={load}
+            onRetry={() => void load()}
           />
         </aside>
 
@@ -143,7 +156,7 @@ export default function App() {
             shredding={shredding}
             onChange={filler.setUserValue}
           />
-          <HowItWorks envelopes={filler.envelopes} />
+          <HowItWorks calls={filler.calls} />
         </div>
       </main>
 

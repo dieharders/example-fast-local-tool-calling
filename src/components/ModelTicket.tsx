@@ -2,17 +2,17 @@ import { Cpu } from 'lucide-react'
 import type { LoadProgress } from '../engine'
 import type { EngineStatus } from '../hooks/useEngine'
 import type { FillStats, Phase } from '../hooks/useFormFiller'
-import { FORM_SECTIONS } from '../form/schema'
 
 interface Props {
   ticket: number
   modelLabel: string
   runtimeLabel: string
+  lanes: number
   status: EngineStatus
   progress: LoadProgress | null
   error: string | null
   phase: Phase
-  reading: number
+  calls: { done: number; total: number; tool: string | null }
   stats: FillStats | null
   onRetry: () => void
 }
@@ -28,31 +28,35 @@ export function ModelTicket(p: Props) {
   if (p.status === 'error') {
     headline = 'Window closed'
     detail = p.error ?? 'The model failed to load.'
+  } else if (p.status === 'idle') {
+    headline = 'Please take a number'
+    detail = `Press Fill to fetch ${p.modelLabel} (36 MB, once)`
   } else if (p.status !== 'ready') {
     headline = 'Please take a number'
     const pr = p.progress
-    if (!pr || pr.stage === 'runtime') detail = 'Starting the WebAssembly runtime…'
-    else if (pr.stage === 'init') detail = 'Warming up the clerk…'
+    if (!pr || pr.stage === 'runtime') detail = 'Opening the window…'
+    else if (pr.stage === 'init') detail = pr.cached ? 'Loaded from this device · warming up…' : 'Warming up the clerk…'
     else detail = `Fetching ${p.modelLabel} · ${mb(pr.loaded)} / ${mb(pr.total)} MB`
     pct = pr && pr.total ? Math.round((pr.loaded / pr.total) * 100) : 0
   } else if (p.phase === 'running') {
     headline = 'Processing…'
     detail =
-      p.reading >= 0
-        ? `Reading section ${p.reading + 1}/${FORM_SECTIONS.length} · ${FORM_SECTIONS[p.reading].title}`
+      p.calls.done < p.calls.total
+        ? `Tool call ${Math.min(p.calls.done + 1, p.calls.total)} of ${p.calls.total}${p.calls.tool ? ` · ${p.calls.tool}` : ''}`
         : 'Filing it neatly…'
+    pct = p.calls.total ? Math.round((p.calls.done / p.calls.total) * 100) : 0
   } else if (p.phase === 'done' && p.stats) {
     headline = `Served in ${(p.stats.inferenceMs / 1000).toFixed(1)} s`
     detail = [
+      `${p.stats.calls} tool calls`,
       p.stats.decodeTps && `${p.stats.decodeTps} tok/s`,
       p.stats.peakRamMb && `${Math.round(p.stats.peakRamMb)} MB RAM`,
-      `${FORM_SECTIONS.length} tool calls`,
     ]
       .filter(Boolean)
       .join(' · ')
   } else {
     headline = 'Window 1 open'
-    detail = `${p.modelLabel} · ready`
+    detail = `${p.modelLabel} · ready${p.lanes > 1 ? ` · ${p.lanes} clerks` : ''}`
   }
 
   return (

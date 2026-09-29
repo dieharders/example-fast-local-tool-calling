@@ -1,15 +1,15 @@
 import { createMockEngine } from './mockEngine'
+import { createNeedleEngine } from './needleEngine'
 import type { FillEngine } from './types'
 
-export type { FillEngine, NeedleEnvelope, LoadProgress } from './types'
+export type { FillEngine, NeedleEnvelope, LoadProgress, ToolSchema } from './types'
 
 let engine: FillEngine | null = null
 
-/** `?engine=mock|needle` overrides `VITE_ENGINE`. Phase 1 ships the mock only. */
+/** The real Needle engine by default; `?engine=mock` (or VITE_ENGINE=mock) swaps in the stand-in. */
 export function getEngine(): FillEngine {
   if (engine) return engine
-  const requested = new URLSearchParams(window.location.search).get('engine') ?? import.meta.env.VITE_ENGINE ?? 'mock'
-  if (requested !== 'mock') console.warn(`[engine] "${requested}" is not wired yet; using the mock.`)
-  engine = createMockEngine()
+  const requested = new URLSearchParams(window.location.search).get('engine') ?? import.meta.env.VITE_ENGINE ?? 'needle'
+  engine = requested === 'mock' ? createMockEngine() : createNeedleEngine()
   return engine
 }

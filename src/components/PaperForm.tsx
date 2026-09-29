@@ -59,7 +59,7 @@ export const PaperForm = forwardRef<HTMLElement, Props>(function PaperForm(
             <div className="border-t-2 border-print px-3 py-1.5 text-[10px] uppercase sm:min-w-44 sm:border-t-0 sm:border-l-2">
               <div className="font-bold tracking-wider">For office use only</div>
               <div className="mt-0.5 flex items-baseline gap-1">
-                Clerk: <span className="font-type text-sm text-ink normal-case">{done ? 'Needle-3 (on-device)' : ''}</span>
+                Clerk: <span className="font-type text-sm text-ink normal-case">{done ? `Needle-3 · ${stats.calls} calls` : ''}</span>
               </div>
               <div className="flex items-baseline gap-1">
                 Processed: <span className="font-type text-sm text-ink normal-case">{done ? `${(stats.inferenceMs / 1000).toFixed(1)} s` : ''}</span>
@@ -73,6 +73,7 @@ export const PaperForm = forwardRef<HTMLElement, Props>(function PaperForm(
             key={s.tool}
             section={s}
             view={sections[s.tool]}
+            phase={phase}
             values={values}
             flags={flags}
             active={active}

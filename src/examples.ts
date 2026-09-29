@@ -1,5 +1,6 @@
 // Three messy paragraphs, each chosen to show off a different skill:
-// relative dates + abbreviations, slang + unit conversion, spoken numbers + disambiguation.
+// relative dates + abbreviations, slang + income conversion, a rambling voicemail transcript
+// (whose own phone vs her daughter's, "around Thanksgiving", a spelled-out surname).
 // All data is fictional (555-01xx phones, example.com email, a well-known invalid SSN).
 
 export type ExampleId = 'maria' | 'dev' | 'dorothy'
@@ -40,11 +41,10 @@ export const EXAMPLES: Example[] = [
     blurb: 'voicemail',
     emoji: '☎️',
     text:
-      "Hello dear, this is Dorothy Anne Whitfield, that's W-H-I-T-F-I-E-L-D. I was born the fifth of July, " +
-      "nineteen forty-eight. I've lived at 1600 Maple Drive in Sacramento for thirty-one years, we owned the " +
-      "house, but I'm moving to be closer to my daughter, at 22 Harbor View Road, unit B, in Santa Cruz, sometime " +
-      "around Thanksgiving. I'm retired, I taught third grade. My number is nine one six, five five five, zero one " +
-      "three three. My daughter Susan's number, in case of emergency, is 831-555-0178. Oh, and Biscuit, my little " +
-      'dog, is coming too. Just the two of us!',
+      "Hello dear, this is Dorothy Anne Whitfield, that's W-H-I-T-F-I-E-L-D. I was born July 5th, 1948. " +
+      "I've lived at 1600 Maple Drive in Sacramento for 31 years, we owned the house, but I'm moving to be closer to " +
+      'my daughter, at 22 Harbor View Road, unit B, in Santa Cruz, sometime around Thanksgiving. I\'m retired, I taught ' +
+      "third grade. My number is 916-555-0133. My daughter Susan's number, in case of emergency, is 831-555-0178. " +
+      'Oh, and Biscuit, my little dog, is coming too. Just the two of us!',
   },
 ]
