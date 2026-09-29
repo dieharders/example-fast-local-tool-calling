@@ -1,4 +1,6 @@
-# The Form That Fills Itself
+# An Example Project Demonstrating Fast Tool Calling with a System One Model
+
+The Form That Fills Itself
 
 **Write one messy paragraph about yourself. Watch a 33-field rental application fill itself, with dates reformatted, phone numbers fixed and boxes ticked. The AI runs in your browser, so your SSN and address never leave your device.**
 
@@ -26,8 +28,6 @@ becomes 18 filled fields from 12 tool calls, including:
 | Employer / title | Kaiser / Nurse |
 | Monthly income | $8,000 ⚑ *no period was given, so $96,000 was read as per year* |
 | Pets | ☒ Dog |
-
-The ⚑ fields glow yellow with a **check me** tag that explains the doubt and offers "Looks right" or "Fix it". (The move-in date depends on today's date. This run was on 2026-09-28.)
 
 ## Quickstart
 
@@ -219,18 +219,6 @@ That's why our app does the *routing* in regexes and uses the model for the *rea
 - **Spoken digits** ("four one five…") don't extract reliably.
 - **Holidays come back empty.** "around Thanksgiving" returns no date, so a form rule fills it and flags it.
 - **Speed:** about 0.2–0.5 s per call on a laptop CPU, about 290 tokens/s decode, and about 97 MB of WASM heap per instance. A whole example (12–18 calls) takes about 5–7 s on one lane, less with two. The browser build is single-threaded CPU only: no WebGPU, no streaming, and no COOP/COEP headers needed.
-
----
-
-## Privacy: what actually crosses the network
-
-| When | What | From |
-| --- | --- | --- |
-| Page load | The app (HTML, JS, CSS, fonts, images) | Your host (for example Vercel). Fonts are bundled, with no Google Fonts calls |
-| First visit | `needle.js`, `needle.wasm`, `needle3.cact` (36 MB) | Hugging Face, [pinned revision](src/engine/needleEngine.ts), saved in Cache Storage |
-| **While filling** | **Nothing** | |
-
-Your text is only ever passed to a Web Worker on your own machine. The receipt's "bytes sent" figure is **measured, not asserted**: a `PerformanceObserver` counts every network request made during the fill. Visitors with Data Saver turned on download the model only when they first press Fill.
 
 ---
 
