@@ -35,6 +35,8 @@ interface State {
   phase: Phase
   values: Record<string, string>
   flags: Record<string, string>
+  /** Fields whose flag the user cleared by confirming ("looks right") or correcting them. */
+  verified: Record<string, true>
   sections: Record<string, SectionView>
   active: string | null
   /** Clauses the model is reading right now (one per lane), for highlighting the pad. */
@@ -53,6 +55,7 @@ type Action =
   | { type: 'section'; section: string; status: SectionStatus }
   | { type: 'value'; id: string; value: string }
   | { type: 'userValue'; id: string; value: string }
+  | { type: 'confirm'; id: string }
   | { type: 'flag'; id: string; reason: string }
   | { type: 'active'; id: string | null }
   | { type: 'finish'; stats: FillStats }
@@ -66,6 +69,7 @@ const initial: State = {
   phase: 'idle',
   values: {},
   flags: {},
+  verified: {},
   sections: emptySections(),
   active: null,
   reading: [],
@@ -123,9 +127,16 @@ function reducer(state: State, a: Action): State {
     case 'value':
       return { ...state, values: { ...state.values, [a.id]: a.value } }
     case 'userValue': {
+      if (!state.flags[a.id]) return { ...state, values: { ...state.values, [a.id]: a.value } }
       const flags = { ...state.flags }
       delete flags[a.id]
-      return { ...state, values: { ...state.values, [a.id]: a.value }, flags }
+      return { ...state, values: { ...state.values, [a.id]: a.value }, flags, verified: { ...state.verified, [a.id]: true } }
+    }
+    case 'confirm': {
+      if (!state.flags[a.id]) return state
+      const flags = { ...state.flags }
+      delete flags[a.id]
+      return { ...state, flags, verified: { ...state.verified, [a.id]: true } }
     }
     case 'flag':
       return { ...state, flags: { ...state.flags, [a.id]: a.reason } }
@@ -274,6 +285,7 @@ export function useFormFiller(engine: FillEngine) {
   }, [])
 
   const setUserValue = useCallback((id: string, value: string) => dispatch({ type: 'userValue', id, value }), [])
+  const confirm = useCallback((id: string) => dispatch({ type: 'confirm', id }), [])
 
-  return { ...state, fill, reset, setUserValue }
+  return { ...state, fill, reset, setUserValue, confirm }
 }

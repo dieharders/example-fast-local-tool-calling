@@ -2,17 +2,24 @@ import { ArrowDown } from 'lucide-react'
 import { useRef } from 'react'
 import { fieldDomId } from '../form/schema'
 
-/** Floating Post-it that cycles through fields flagged "check me". */
+/** Floating Post-it that walks through the fields flagged "check me", opening each one's note. */
 export function ReviewChip({ flagged }: { flagged: string[] }) {
-  const next = useRef(0)
+  const last = useRef<string | null>(null)
   if (flagged.length === 0) return null
 
   const jump = () => {
-    const id = flagged[next.current % flagged.length]
-    next.current++
+    // Next flag after the last one visited; if that one was just cleared, the first one left.
+    const at = last.current ? flagged.indexOf(last.current) : -1
+    const id = flagged[(at + 1) % flagged.length]
+    last.current = id
     const wrap = document.getElementById(fieldDomId(id))
     wrap?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-    wrap?.querySelector<HTMLElement>('input:not([type=radio]), select, input[type=radio]')?.focus({ preventScroll: true })
+    // Once it's in view, open the field's note so "Looks right" / "Fix it" are one click away.
+    window.setTimeout(() => {
+      const tag = wrap?.querySelector<HTMLButtonElement>('[data-checkme]')
+      if (tag && tag.getAttribute('aria-expanded') !== 'true') tag.click()
+      tag?.focus({ preventScroll: true })
+    }, 380)
   }
 
   return (

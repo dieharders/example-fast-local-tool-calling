@@ -8,15 +8,17 @@ interface Props {
   phase: Phase
   values: Record<string, string>
   flags: Record<string, string>
+  verified: Record<string, true>
   sections: Record<string, SectionView>
   active: string | null
   stats: FillStats | null
   shredding: boolean
   onChange: (id: string, value: string) => void
+  onConfirm: (id: string) => void
 }
 
 export const PaperForm = forwardRef<HTMLElement, Props>(function PaperForm(
-  { phase, values, flags, sections, active, stats, shredding, onChange },
+  { phase, values, flags, verified, sections, active, stats, shredding, onChange, onConfirm },
   ref,
 ) {
   const done = phase === 'done' && stats
@@ -76,8 +78,10 @@ export const PaperForm = forwardRef<HTMLElement, Props>(function PaperForm(
             phase={phase}
             values={values}
             flags={flags}
+            verified={verified}
             active={active}
             onChange={onChange}
+            onConfirm={onConfirm}
           />
         ))}
 

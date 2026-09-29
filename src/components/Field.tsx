@@ -37,8 +37,11 @@ interface Props {
   field: FieldDef
   value: string
   flag?: string
+  /** The user confirmed or corrected a flagged value. */
+  verified: boolean
   active: boolean
   onChange: (id: string, value: string) => void
+  onConfirm: (id: string) => void
 }
 
 function Highlighter() {
@@ -52,7 +55,7 @@ function Highlighter() {
 
 const inkText = 'font-type text-[1.05rem] text-ink'
 
-export const Field = memo(function Field({ field, value, flag, active, onChange }: Props) {
+export const Field = memo(function Field({ field, value, flag, verified, active, onChange, onConfirm }: Props) {
   const inputId = `input-${field.id}`
   const labelId = `label-${field.id}`
   const span = `${MOBILE_SPAN[field.span[0]]} ${DESKTOP_SPAN[field.span[1]]}`
@@ -158,7 +161,26 @@ export const Field = memo(function Field({ field, value, flag, active, onChange 
           <Lock className="size-2.5" strokeWidth={3} /> Never leaves this device
         </span>
       )}
-      {flag && <CheckMeTag reason={flag} className="-top-4 -right-2" />}
+      {flag ? (
+        <CheckMeTag
+          reason={flag}
+          className="-top-4 -right-2"
+          onConfirm={() => onConfirm(field.id)}
+          onEdit={() => {
+            const wrap = document.getElementById(fieldDomId(field.id))
+            wrap?.querySelector<HTMLElement>('input:checked, input:not([type=radio]), select, input')?.focus()
+          }}
+        />
+      ) : (
+        verified && (
+          <span
+            aria-label="Checked by you"
+            className="animate-pop pointer-events-none absolute -top-3 right-0 font-hand text-[15px] leading-none font-bold text-[#2e7d32] [--tilt:-4deg]"
+          >
+            ✓ checked
+          </span>
+        )
+      )}
     </div>
   )
 })

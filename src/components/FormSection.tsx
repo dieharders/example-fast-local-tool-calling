@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { SectionDef } from '../form/schema'
 import type { Phase, SectionView } from '../hooks/useFormFiller'
 import { CheckMeTag } from './CheckMeTag'
@@ -12,8 +13,10 @@ interface Props {
   phase: Phase
   values: Record<string, string>
   flags: Record<string, string>
+  verified: Record<string, true>
   active: string | null
   onChange: (id: string, value: string) => void
+  onConfirm: (id: string) => void
 }
 
 function Status({ view, phase }: { view: SectionView; phase: Phase }) {
@@ -41,9 +44,13 @@ function Status({ view, phase }: { view: SectionView; phase: Phase }) {
   return null
 }
 
-export function FormSection({ section, view, phase, values, flags, active, onChange }: Props) {
+export function FormSection({ section, view, phase, values, flags, verified, active, onChange, onConfirm }: Props) {
   const done = view.status === 'done'
-  const low = done && view.confidence !== undefined && view.confidence < SECTION_REVIEW
+  const [dismissed, setDismissed] = useState(false)
+  useEffect(() => {
+    if (!done) setDismissed(false) // a new fill brings the section note back
+  }, [done])
+  const low = done && !dismissed && view.confidence !== undefined && view.confidence < SECTION_REVIEW
   return (
     <section className="mt-8 first:mt-6">
       <div className="relative flex min-h-7 items-center justify-between gap-2 bg-print px-2.5 py-1 text-paper sm:px-3">
@@ -56,6 +63,7 @@ export function FormSection({ section, view, phase, values, flags, active, onCha
             label="check this section"
             reason={`Across its ${view.finished} tool call${view.finished === 1 ? '' : 's'}, the model averaged only ${Math.round((view.confidence ?? 0) * 100)}% confidence here. Give every field a glance.`}
             className="-top-3.5 right-24 sm:right-28"
+            onConfirm={() => setDismissed(true)}
           />
         )}
       </div>
@@ -71,8 +79,10 @@ export function FormSection({ section, view, phase, values, flags, active, onCha
             field={f}
             value={values[f.id] ?? ''}
             flag={flags[f.id]}
+            verified={verified[f.id] === true}
             active={active === f.id}
             onChange={onChange}
+            onConfirm={onConfirm}
           />
         ))}
       </div>

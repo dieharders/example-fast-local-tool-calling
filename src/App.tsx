@@ -56,6 +56,15 @@ export default function App() {
   const running = filler.phase === 'running'
   const flaggedIds = useMemo(() => ALL_FIELDS.filter((f) => filler.flags[f.id]).map((f) => f.id), [filler.flags])
 
+  // Cheer when the last "check me" is cleared after a fill.
+  const openFlags = useRef(0)
+  useEffect(() => {
+    if (filler.phase === 'done' && openFlags.current > 0 && flaggedIds.length === 0) {
+      toast.success('All checked. Only the signature is left ✍️')
+    }
+    openFlags.current = flaggedIds.length
+  }, [flaggedIds.length, filler.phase])
+
   const onExample = (ex: Example) => {
     setText(ex.text)
     setExampleId(ex.id)
@@ -150,11 +159,13 @@ export default function App() {
             phase={filler.phase}
             values={filler.values}
             flags={filler.flags}
+            verified={filler.verified}
             sections={filler.sections}
             active={filler.active}
             stats={filler.stats}
             shredding={shredding}
             onChange={filler.setUserValue}
+            onConfirm={filler.confirm}
           />
           <HowItWorks calls={filler.calls} />
         </div>
