@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import type { SectionDef } from '../form/schema'
 import type { Phase, SectionView } from '../hooks/useFormFiller'
 import { CheckMeTag } from './CheckMeTag'
@@ -17,6 +16,7 @@ interface Props {
   active: string | null
   onChange: (id: string, value: string) => void
   onConfirm: (id: string) => void
+  onConfirmSection: (section: string) => void
 }
 
 function Status({ view, phase }: { view: SectionView; phase: Phase }) {
@@ -44,13 +44,9 @@ function Status({ view, phase }: { view: SectionView; phase: Phase }) {
   return null
 }
 
-export function FormSection({ section, view, phase, values, flags, verified, active, onChange, onConfirm }: Props) {
+export function FormSection({ section, view, phase, values, flags, verified, active, onChange, onConfirm, onConfirmSection }: Props) {
   const done = view.status === 'done'
-  const [dismissed, setDismissed] = useState(false)
-  useEffect(() => {
-    if (!done) setDismissed(false) // a new fill brings the section note back
-  }, [done])
-  const low = done && !dismissed && view.confidence !== undefined && view.confidence < SECTION_REVIEW
+  const low = done && !view.reviewed && view.confidence !== undefined && view.confidence < SECTION_REVIEW
   return (
     <section className="mt-8 first:mt-6">
       <div className="relative flex min-h-7 items-center justify-between gap-2 bg-print px-2.5 py-1 text-paper sm:px-3">
@@ -63,7 +59,7 @@ export function FormSection({ section, view, phase, values, flags, verified, act
             label="check this section"
             reason={`Across its ${view.finished} tool call${view.finished === 1 ? '' : 's'}, the model averaged only ${Math.round((view.confidence ?? 0) * 100)}% confidence here. Give every field a glance.`}
             className="-top-3.5 right-24 sm:right-28"
-            onConfirm={() => setDismissed(true)}
+            onConfirm={() => onConfirmSection(section.tool)}
           />
         )}
       </div>

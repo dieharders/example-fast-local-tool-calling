@@ -1,5 +1,5 @@
 import { Check, PenLine } from 'lucide-react'
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 
 interface Props {
   reason: string
@@ -11,10 +11,25 @@ interface Props {
   onEdit?: () => void
 }
 
+/** Focus the first element after `el` that Tab would reach, so removing `el` doesn't drop focus to <body>. */
+function focusNextAfter(el: HTMLElement) {
+  for (const c of document.querySelectorAll<HTMLElement>('a[href], button, input, select, textarea, [tabindex]')) {
+    if (el.contains(c) || !(el.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING)) continue
+    if (c.tabIndex < 0 || c.matches(':disabled') || !c.getClientRects().length || getComputedStyle(c).visibility === 'hidden') continue
+    if (c instanceof HTMLInputElement && c.type === 'radio') {
+      // Tab stops once per radio group: on the checked option, or the first one if none is checked.
+      const group = [...document.getElementsByName(c.name)] as HTMLInputElement[]
+      if (c !== (group.find((r) => r.checked) ?? group[0])) continue
+    }
+    c.focus()
+    return
+  }
+}
+
 /**
- * Tilted Post-it with a perforated ✓ stub. Hover (desktop) or tap (touch) opens the note that
- * explains the flag. The note closes on an outside press or Escape, not on blur, so a tap on
- * its buttons always lands.
+ * Tilted Post-it with a perforated ✓ stub. Hover (mouse) or tap (touch) opens the note that
+ * explains the flag. The note closes on an outside press, focus moving elsewhere, or Escape —
+ * not on blur, since a tap on its buttons doesn't always focus them on touch browsers.
  */
 export function CheckMeTag({ reason, label = 'check me', className = '', onConfirm, onEdit }: Props) {
   const [open, setOpen] = useState(false)
@@ -24,14 +39,16 @@ export function CheckMeTag({ reason, label = 'check me', className = '', onConfi
 
   useEffect(() => {
     if (!open) return
-    const onDown = (e: PointerEvent) => {
+    const onOutside = (e: Event) => {
       if (!ref.current?.contains(e.target as Node)) setOpen(false)
     }
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
-    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('pointerdown', onOutside)
+    document.addEventListener('focusin', onOutside)
     document.addEventListener('keydown', onKey)
     return () => {
-      document.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('pointerdown', onOutside)
+      document.removeEventListener('focusin', onOutside)
       document.removeEventListener('keydown', onKey)
     }
   }, [open])
@@ -41,12 +58,24 @@ export function CheckMeTag({ reason, label = 'check me', className = '', onConfi
   // Keep the note on screen: right-align it under the tag, then nudge it inside the viewport.
   const [place, setPlace] = useState<{ left: number; width: number }>()
   useLayoutEffect(() => {
-    if (!shown || !ref.current) return
-    const r = ref.current.getBoundingClientRect()
-    const width = Math.min(256, window.innerWidth - 16)
-    const left = Math.max(8, Math.min(r.right - width, window.innerWidth - 8 - width))
-    setPlace({ left: left - r.left, width })
+    if (!shown) return
+    const measure = () => {
+      if (!ref.current) return
+      const r = ref.current.getBoundingClientRect()
+      const width = Math.min(256, window.innerWidth - 16)
+      const left = Math.max(8, Math.min(r.right - width, window.innerWidth - 8 - width))
+      setPlace({ left: left - r.left, width })
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
   }, [shown])
+
+  const confirm = (e: MouseEvent) => {
+    // Keyboard activation (detail 0): this tag is about to unmount, so hand focus on to the next field.
+    if (e.detail === 0 && ref.current) focusNextAfter(ref.current)
+    onConfirm?.()
+  }
 
   const action = 'inline-flex items-center gap-1 px-2 py-1 text-[11px] font-bold tracking-wide uppercase'
 
@@ -54,8 +83,9 @@ export function CheckMeTag({ reason, label = 'check me', className = '', onConfi
     <span
       ref={ref}
       className={`absolute z-10 ${className}`}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      // Mouse only: touch browsers emulate mouseenter on tap but never the matching leave.
+      onPointerEnter={(e) => e.pointerType === 'mouse' && setHover(true)}
+      onPointerLeave={(e) => e.pointerType === 'mouse' && setHover(false)}
     >
       <span className="animate-pop flex items-stretch shadow-[1px_2px_0_rgb(0_0_0/0.22)] [--tilt:4deg]">
         <button
@@ -71,7 +101,7 @@ export function CheckMeTag({ reason, label = 'check me', className = '', onConfi
         {onConfirm && (
           <button
             type="button"
-            onClick={onConfirm}
+            onClick={confirm}
             title="Looks right"
             aria-label="Looks right: clear this flag"
             className="flex items-center border-l-2 border-dotted border-print/35 bg-[#f2c94c] px-1 text-print transition-colors hover:bg-[#9ad29a] focus-visible:bg-[#9ad29a]"
@@ -95,7 +125,7 @@ export function CheckMeTag({ reason, label = 'check me', className = '', onConfi
           {(onConfirm || onEdit) && (
             <span className="mt-2 flex flex-wrap gap-2">
               {onConfirm && (
-                <button type="button" onClick={onConfirm} className={`${action} bg-[#2e7d32] text-paper hover:brightness-110`}>
+                <button type="button" onClick={confirm} className={`${action} bg-[#2e7d32] text-paper hover:brightness-110`}>
                   <Check className="size-3.5" strokeWidth={3} /> Looks right
                 </button>
               )}

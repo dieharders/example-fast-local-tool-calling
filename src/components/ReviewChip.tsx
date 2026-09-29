@@ -1,24 +1,30 @@
 import { ArrowDown } from 'lucide-react'
-import { useRef } from 'react'
-import { fieldDomId } from '../form/schema'
+import { useEffect, useRef } from 'react'
+import { ALL_FIELDS, fieldDomId } from '../form/schema'
+
+const ORDER = new Map(ALL_FIELDS.map((f, i) => [f.id, i]))
 
 /** Floating Post-it that walks through the fields flagged "check me", opening each one's note. */
 export function ReviewChip({ flagged }: { flagged: string[] }) {
   const last = useRef<string | null>(null)
+  const timer = useRef<number>(undefined)
+  useEffect(() => () => window.clearTimeout(timer.current), [])
   if (flagged.length === 0) return null
 
   const jump = () => {
-    // Next flag after the last one visited; if that one was just cleared, the first one left.
-    const at = last.current ? flagged.indexOf(last.current) : -1
-    const id = flagged[(at + 1) % flagged.length]
+    // Next flag in form order after the last one visited (even if that one was since cleared), wrapping around.
+    const at = last.current ? ORDER.get(last.current)! : -1
+    const id = flagged.find((f) => ORDER.get(f)! > at) ?? flagged[0]
     last.current = id
     const wrap = document.getElementById(fieldDomId(id))
     wrap?.scrollIntoView({ block: 'center', behavior: 'smooth' })
     // Once it's in view, open the field's note so "Looks right" / "Fix it" are one click away.
-    window.setTimeout(() => {
+    // Focusing the tag closes any other open note; a quicker second click supersedes this one.
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => {
       const tag = wrap?.querySelector<HTMLButtonElement>('[data-checkme]')
-      if (tag && tag.getAttribute('aria-expanded') !== 'true') tag.click()
       tag?.focus({ preventScroll: true })
+      if (tag && tag.getAttribute('aria-expanded') !== 'true') tag.click()
     }, 380)
   }
 

@@ -17,6 +17,8 @@ export interface SectionView {
   confidence?: number
   notes: string[]
   errors: number
+  /** The user cleared the low-confidence "check this section" note for this fill. */
+  reviewed?: boolean
 }
 
 export interface FillStats {
@@ -56,6 +58,7 @@ type Action =
   | { type: 'value'; id: string; value: string }
   | { type: 'userValue'; id: string; value: string }
   | { type: 'confirm'; id: string }
+  | { type: 'confirmSection'; section: string }
   | { type: 'flag'; id: string; reason: string }
   | { type: 'active'; id: string | null }
   | { type: 'finish'; stats: FillStats }
@@ -138,6 +141,8 @@ function reducer(state: State, a: Action): State {
       delete flags[a.id]
       return { ...state, flags, verified: { ...state.verified, [a.id]: true } }
     }
+    case 'confirmSection':
+      return { ...state, sections: { ...state.sections, [a.section]: { ...state.sections[a.section], reviewed: true } } }
     case 'flag':
       return { ...state, flags: { ...state.flags, [a.id]: a.reason } }
     case 'active':
@@ -286,6 +291,7 @@ export function useFormFiller(engine: FillEngine) {
 
   const setUserValue = useCallback((id: string, value: string) => dispatch({ type: 'userValue', id, value }), [])
   const confirm = useCallback((id: string) => dispatch({ type: 'confirm', id }), [])
+  const confirmSection = useCallback((section: string) => dispatch({ type: 'confirmSection', section }), [])
 
-  return { ...state, fill, reset, setUserValue, confirm }
+  return { ...state, fill, reset, setUserValue, confirm, confirmSection }
 }

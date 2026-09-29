@@ -59,10 +59,15 @@ export default function App() {
   // Cheer when the last "check me" is cleared after a fill.
   const openFlags = useRef(0)
   useEffect(() => {
-    if (filler.phase === 'done' && openFlags.current > 0 && flaggedIds.length === 0) {
-      toast.success('All checked. Only the signature is left ✍️')
-    }
+    const cleared = filler.phase === 'done' && openFlags.current > 0 && flaggedIds.length === 0
     openFlags.current = flaggedIds.length
+    if (!cleared) return
+    const cheer = () => void toast.success('All checked. Only the signature is left ✍️')
+    // Typing clears a flag on the first keystroke, so wait until the user leaves the text field they're correcting.
+    const el = document.activeElement
+    if (!(el instanceof HTMLInputElement) || el.type === 'radio' || !formRef.current?.contains(el)) return cheer()
+    el.addEventListener('blur', cheer, { once: true })
+    return () => el.removeEventListener('blur', cheer)
   }, [flaggedIds.length, filler.phase])
 
   const onExample = (ex: Example) => {
@@ -166,6 +171,7 @@ export default function App() {
             shredding={shredding}
             onChange={filler.setUserValue}
             onConfirm={filler.confirm}
+            onConfirmSection={filler.confirmSection}
           />
           <HowItWorks calls={filler.calls} />
         </div>

@@ -167,8 +167,11 @@ export const Field = memo(function Field({ field, value, flag, verified, active,
           className="-top-4 -right-2"
           onConfirm={() => onConfirm(field.id)}
           onEdit={() => {
-            const wrap = document.getElementById(fieldDomId(field.id))
-            wrap?.querySelector<HTMLElement>('input:checked, input:not([type=radio]), select, input')?.focus()
+            if (field.type !== 'checks') return document.getElementById(inputId)?.focus()
+            // Radios have no id: land on the model's choice, or the first option if none is checked.
+            const radios = [...document.getElementsByName(field.id)] as HTMLInputElement[]
+            const pick = radios.find((r) => r.checked) ?? radios[0]
+            pick?.focus()
           }}
         />
       ) : (
