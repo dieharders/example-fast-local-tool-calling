@@ -1,5 +1,5 @@
 // Deterministic clean-up of what the model copied out of the text. The model finds the value
-// ("415 555 0192", "March 4th 91", "88 mission st apt 4"); this file formats it for the form.
+// ("415 555 0192", "March 4th 91", "88 marigold st apt 4"); this file formats it for the form.
 
 // ---------- system prompt ----------
 export function toIsoDate(d: Date): string {
@@ -83,7 +83,7 @@ function prettyUnit(u: string): string {
   return u.trim().replace(/^#\s*/, '#').toUpperCase()
 }
 
-/** "88 mission st apt 4" → { street: "88 Mission St", unit: "Apt 4" }; "440 Pine in Oakland" → "440 Pine". */
+/** "88 marigold st apt 4" → { street: "88 Marigold St", unit: "Apt 4" }; "440 Pine in Oakland" → "440 Pine". */
 export function cleanStreet(street: string, clause: string): { street: string; unit: string } {
   let s = street.replace(/\s+in\s+[a-z].*$/i, '').replace(/,\s*[a-z\s]+$/i, '').trim()
   let unit = ''
@@ -117,7 +117,8 @@ const STATE_CODE =
 
 /** City from the model (or a known alias in the clause), expanded and title-cased. */
 export function cleanCity(city: string | undefined, clause: string): string {
-  const raw = (city ?? '').trim()
+  // The model sometimes copies the ZIP along with the city ("sf 94105"); zipIn() reads it separately.
+  const raw = (city ?? '').replace(/\s*\d{5}(-\d{4})?$/, '').trim()
   const alias = CITY_ALIAS[raw.toLowerCase()]
   if (alias) return alias
   if (raw) return titleCase(raw)

@@ -9,8 +9,8 @@ export function Footer() {
           <a href="https://cactuscompute.com" target="_blank" rel="noreferrer" className="underline hover:text-paper">
             Cactus Needle 3
           </a>{' '}
-          (Apache-2.0) · runs 100% on-device. The only download is the model itself (36 MB, from Hugging Face, cached
-          after the first visit); nothing you type is ever sent anywhere, not even to us.
+          (Apache-2.0) · runs 100% on-device. Besides this page, the only download is the model itself (36 MB, from
+          Hugging Face, cached after the first visit); nothing you type is ever sent anywhere, not even to us.
         </p>
         <a
           href="https://github.com/cactus-compute/needle"

@@ -30,10 +30,10 @@ export const EXAMPLES: Example[] = [
     blurb: 'chaotic texter',
     emoji: '📱',
     text:
-      'yo its dev patel!! dob 11/22/98. currently at 88 mission st apt 4, sf 94105, been here 2 yrs and the ' +
-      'lease is up 😩 need a place by nov 15th lol. looking at 2100 Shattuck #3B in berkeley, 12 mo lease ideally. ' +
-      '2 ppl + my cat mochi 🐈 software guy @ stripe, 3 yrs, full time, ~140k/yr. cell (628) 555-0147 or ' +
-      'devp@example.com, text me pls. no smoking',
+      'yo its dev nair!! dob 11/22/98. currently at 88 marigold st apt 4, sf 94105, been here 2 yrs and the ' +
+      'lease is up 😩 need a place by nov 15th lol. looking at 2100 Larkspur Ave #3B in berkeley, 12 mo lease ideally. ' +
+      '2 ppl + my cat mochi 🐈 software guy @ loopwise, 3 yrs, full time, ~140k/yr. cell (628) 555-0147 or ' +
+      'devn@example.com, text me pls. no smoking',
   },
   {
     id: 'dorothy',
